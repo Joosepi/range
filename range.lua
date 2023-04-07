@@ -1,6 +1,9 @@
 -- Define the regular range value
 local regularRange = 10
 
+-- Define a global variable to indicate whether the regular range is enabled or not
+local regularRangeEnabled = true
+
 -- Define the function to double the range when a player is close to someone
 function DoubleRangeOnClose(player, range)
    local nearbyPlayers = game:GetService("Players"):GetPlayers()
@@ -15,10 +18,23 @@ function DoubleRangeOnClose(player, range)
    return range
 end
 
+-- Define the keybind for enabling/disabling the regular range
+local toggleRegularRangeKey = Enum.KeyCode.R
+
+-- Define the function to handle the keybind event
+function OnKeyPressed(inputObject, gameProcessedEvent)
+   if not gameProcessedEvent and inputObject.KeyCode == toggleRegularRangeKey then
+      regularRangeEnabled = not regularRangeEnabled
+   end
+end
+
+-- Connect the key press event to the function
+game:GetService("UserInputService").InputBegan:Connect(OnKeyPressed)
+
 -- Example usage
 while true do
    local player = game.Players.LocalPlayer
-   local range = DoubleRangeOnClose(player, regularRange)
+   local range = regularRangeEnabled and DoubleRangeOnClose(player, regularRange) or regularRange
    print("Range:", range)
    wait(1)
 end
