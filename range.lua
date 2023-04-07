@@ -1,40 +1,52 @@
--- Define the regular range value
-local regularRange = 24
+-- Define the desired field of view (FOV) value
+local fovValue = 70
 
--- Define a global variable to indicate whether the regular range is enabled or not
-local regularRangeEnabled = true
+-- Define the player's team
+local player = game:GetService("Players").LocalPlayer
+local playerTeam = player.TeamColor
 
--- Define the function to double the range when a player is close to someone
-function DoubleRangeOnClose(player, range)
-   local nearbyPlayers = game:GetService("Players"):GetPlayers()
-   for _, otherPlayer in ipairs(nearbyPlayers) do
-      if otherPlayer ~= player and (otherPlayer.Character and player.Character) then
-         local distance = (otherPlayer.Character.Torso.Position - player.Character.Torso.Position).magnitude
-         if distance < range then
-            return range * 2
-         end
-      end
-   end
-   return range
+-- Set the FOV of the player's camera
+game:GetService("Workspace").CurrentCamera.FieldOfView = fovValue
+
+-- Define the function to predict hits
+function PredictHits(opponent)
+    -- Check if the opponent is on the opposite team
+    if opponent.TeamColor ~= playerTeam then
+        -- Get the opponent's character model and R6 body parts
+        local opponentChar = opponent.Character
+        local head = opponentChar and opponentChar:FindFirstChild("Head")
+        local torso = opponentChar and opponentChar:FindFirstChild("Torso")
+        -- Check if the opponent has an R6 character model and is within the FOV
+        if head and torso then
+            local camera = game:GetService("Workspace").CurrentCamera
+            local headScreenPos, headOnScreen = camera:WorldToScreenPoint(head.Position)
+            local torsoScreenPos, torsoOnScreen = camera:WorldToScreenPoint(torso.Position)
+            if headOnScreen and headScreenPos.Z > 0 and torsoOnScreen and torsoScreenPos.Z > 0 then
+                local fov = math.rad(camera.FieldOfView)
+                local screenSize = Vector2.new(game:GetService("GuiService"):GetScreenResolution())
+                local screenCenter = screenSize / 2
+                local headScreenDiff = headScreenPos - screenCenter
+                local torsoScreenDiff = torsoScreenPos - screenCenter
+                local fovRatio = math.tan(fov / 2) / (screenSize.x / 2)
+                if headScreenDiff.magnitude <= fovRatio * screenCenter.magnitude and torsoScreenDiff.magnitude <= fovRatio * screenCenter.magnitude then
+                    -- Increase the prediction chances of hitting the opponent
+                    return true
+                end
+            end
+        end
+    end
+    return false
 end
-
--- Define the keybind for enabling/disabling the regular range
-local toggleRegularRangeKey = Enum.KeyCode.j
-
--- Define the function to handle the keybind event
-function OnKeyPressed(inputObject, gameProcessedEvent)
-   if not gameProcessedEvent and inputObject.KeyCode == toggleRegularRangeKey then
-      regularRangeEnabled = not regularRangeEnabled
-   end
-end
-
--- Connect the key press event to the function
-game:GetService("UserInputService").InputBegan:Connect(OnKeyPressed)
 
 -- Example usage
 while true do
-   local player = game.Players.LocalPlayer
-   local range = regularRangeEnabled and DoubleRangeOnClose(player, regularRange) or regularRange
-   print("Range:", range)
-   wait(1)
+    local opponents = game:GetService("Players"):GetPlayers()
+    for _, opponent in ipairs(opponents) do
+        if opponent ~= player and opponent.Character and opponent.Character.Humanoid.RigType == Enum.HumanoidRigType.R6 then
+            if PredictHits(opponent) then
+                print("Opponent is in FOV and on opposite team! Increase prediction chances!")
+            end
+        end
+    end
+    wait(1)
 end
