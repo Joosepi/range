@@ -1,5 +1,5 @@
 -- Define the desired field of view (FOV) value
-local fovValue = 70
+local fovValue = 45
 
 -- Define the player's team
 local player = game:GetService("Players").LocalPlayer
@@ -30,12 +30,12 @@ function PredictHits(opponent)
                 local fovRatio = math.tan(fov / 2) / (screenSize.x / 2)
                 if headScreenDiff.magnitude <= fovRatio * screenCenter.magnitude and torsoScreenDiff.magnitude <= fovRatio * screenCenter.magnitude then
                     -- Increase the prediction chances of hitting the opponent
-                    return true
+                    return true, 1.5 -- increased prediction chance by 50%
                 end
             end
         end
     end
-    return false
+    return false, 1 -- default prediction chance
 end
 
 -- Example usage
@@ -43,8 +43,9 @@ while true do
     local opponents = game:GetService("Players"):GetPlayers()
     for _, opponent in ipairs(opponents) do
         if opponent ~= player and opponent.Character and opponent.Character.Humanoid.RigType == Enum.HumanoidRigType.R6 then
-            if PredictHits(opponent) then
-                print("Opponent is in FOV and on opposite team! Increase prediction chances!")
+            local isOpponentInFov, predictionChanger = PredictHits(opponent)
+            if isOpponentInFov then
+                print("Opponent is in FOV and on opposite team! Increase prediction chances by " .. (predictionChanger - 1) * 100 .. "%!")
             end
         end
     end
