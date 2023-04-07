@@ -19,7 +19,7 @@ function DoubleRangeOnClose(player, range)
 end
 
 -- Define the keybind for enabling/disabling the regular range
-local toggleRegularRangeKey = Enum.KeyCode.R
+local toggleRegularRangeKey = Enum.KeyCode.J
 
 -- Define the function to handle the keybind event
 function OnKeyPressed(inputObject, gameProcessedEvent)
