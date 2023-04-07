@@ -1,5 +1,5 @@
 -- Define the regular range value
-local regularRange = 10
+local regularRange = 20
 
 -- Define a global variable to indicate whether the regular range is enabled or not
 local regularRangeEnabled = true
