@@ -1,5 +1,5 @@
 -- Define the desired field of view (FOV) value
-local fovValue = 45
+local fovValue = 100
 
 -- Define the player's team
 local player = game:GetService("Players").LocalPlayer
@@ -12,28 +12,28 @@ game:GetService("Workspace").CurrentCamera.FieldOfView = fovValue
 function PredictHits(opponent)
     -- Check if the opponent is on the opposite team
     if opponent.TeamColor ~= playerTeam then
-        -- Get the opponent's character model and body parts
+        -- Get the opponent's character model and R6 body parts
         local opponentChar = opponent.Character
-        local humanoid = opponentChar and opponentChar:FindFirstChildOfClass("Humanoid")
         local upperTorso = opponentChar and opponentChar:FindFirstChild("UpperTorso")
-        -- Check if the opponent has a humanoid and upper torso and is within the FOV
-        if humanoid and upperTorso then
+        -- Check if the opponent has an R6 character model and is within the FOV
+        if upperTorso then
             local camera = game:GetService("Workspace").CurrentCamera
-            local upperTorsoScreenPos, upperTorsoOnScreen = camera:WorldToScreenPoint(upperTorso.Position)
-            if upperTorsoOnScreen and upperTorsoScreenPos.Z > 0 then
+            local screenPos, onScreen = camera:WorldToScreenPoint(upperTorso.Position)
+            if onScreen and screenPos.Z > 0 then
                 local fov = math.rad(camera.FieldOfView)
                 local screenSize = Vector2.new(game:GetService("GuiService"):GetScreenResolution())
                 local screenCenter = screenSize / 2
-                local upperTorsoScreenDiff = upperTorsoScreenPos - screenCenter
+                local screenDiff = screenPos - screenCenter
                 local fovRatio = math.tan(fov / 2) / (screenSize.x / 2)
-                if upperTorsoScreenDiff.magnitude <= fovRatio * screenCenter.magnitude then
-                    -- Increase the prediction chances of hitting the opponent
-                    return true
+                if screenDiff.magnitude <= fovRatio * screenCenter.magnitude then
+                    -- Calculate the prediction chance of hitting the opponent based on the screen difference
+                    local predictionChance = 1 - (screenDiff.magnitude / (fovRatio * screenCenter.magnitude))
+                    return predictionChance
                 end
             end
         end
     end
-    return false
+    return 0
 end
 
 -- Example usage
@@ -41,8 +41,9 @@ while true do
     local opponents = game:GetService("Players"):GetPlayers()
     for _, opponent in ipairs(opponents) do
         if opponent ~= player and opponent.Character and opponent.Character.Humanoid.RigType == Enum.HumanoidRigType.R6 then
-            if PredictHits(opponent) then
-                print("Opponent is in FOV and on opposite team! Increase prediction chances!")
+            local predictionChance = PredictHits(opponent)
+            if predictionChance > 0 then
+                print(string.format("Opponent is in FOV and on opposite team! Prediction chance: %.2f%%", predictionChance * 100))
             end
         end
     end
