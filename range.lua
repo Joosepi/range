@@ -1,5 +1,5 @@
 -- Define the regular range value in studs
-local regularRange = 40
+local regularRange = 14
 
 -- Define a global variable to indicate whether the regular range is enabled or not
 local regularRangeEnabled = true
