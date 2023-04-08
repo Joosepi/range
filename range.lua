@@ -1,4 +1,4 @@
--- Define the regular range value
+-- Define the regular range value in studs
 local regularRange = 40
 
 -- Define a global variable to indicate whether the regular range is enabled or not
@@ -35,6 +35,7 @@ game:GetService("UserInputService").InputBegan:Connect(OnKeyPressed)
 while true do
    local player = game.Players.LocalPlayer
    local range = regularRangeEnabled and DoubleRangeOnClose(player, regularRange) or regularRange
-   print("Range:", range)
+   local rangeInStuds = range * 3 -- each stud in Roblox is 3 units
+   print("Range (studs):", rangeInStuds)
    wait(1)
 end
