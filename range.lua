@@ -1,51 +1,40 @@
--- Define the desired field of view (FOV) value
-local fovValue = 100
+-- Define the regular range value
+local regularRange = 40
 
--- Define the player's team
-local player = game:GetService("Players").LocalPlayer
-local playerTeam = player.TeamColor
+-- Define a global variable to indicate whether the regular range is enabled or not
+local regularRangeEnabled = true
 
--- Set the FOV of the player's camera
-game:GetService("Workspace").CurrentCamera.FieldOfView = fovValue
-
--- Define the function to predict hits
-function PredictHits(opponent)
-    -- Check if the opponent is on the opposite team
-    if opponent.TeamColor ~= playerTeam then
-        -- Get the opponent's character model and R6 body parts
-        local opponentChar = opponent.Character
-        local upperTorso = opponentChar and opponentChar:FindFirstChild("UpperTorso")
-        -- Check if the opponent has an R6 character model and is within the FOV
-        if upperTorso then
-            local camera = game:GetService("Workspace").CurrentCamera
-            local screenPos, onScreen = camera:WorldToScreenPoint(upperTorso.Position)
-            if onScreen and screenPos.Z > 0 then
-                local fov = math.rad(camera.FieldOfView)
-                local screenSize = Vector2.new(game:GetService("GuiService"):GetScreenResolution())
-                local screenCenter = screenSize / 2
-                local screenDiff = screenPos - screenCenter
-                local fovRatio = math.tan(fov / 2) / (screenSize.x / 2)
-                if screenDiff.magnitude <= fovRatio * screenCenter.magnitude then
-                    -- Calculate the prediction chance of hitting the opponent based on the screen difference
-                    local predictionChance = 1 - (screenDiff.magnitude / (fovRatio * screenCenter.magnitude))
-                    return predictionChance
-                end
-            end
-        end
-    end
-    return 0
+-- Define the function to double the range when a player is close to someone
+function DoubleRangeOnClose(player, range)
+   local nearbyPlayers = game:GetService("Players"):GetPlayers()
+   for _, otherPlayer in ipairs(nearbyPlayers) do
+      if otherPlayer ~= player and (otherPlayer.Character and player.Character) then
+         local distance = (otherPlayer.Character.Torso.Position - player.Character.Torso.Position).magnitude
+         if distance < range then
+            return range * 2
+         end
+      end
+   end
+   return range
 end
+
+-- Define the keybind for enabling/disabling the regular range
+local toggleRegularRangeKey = Enum.KeyCode.j
+
+-- Define the function to handle the keybind event
+function OnKeyPressed(inputObject, gameProcessedEvent)
+   if not gameProcessedEvent and inputObject.KeyCode == toggleRegularRangeKey then
+      regularRangeEnabled = not regularRangeEnabled
+   end
+end
+
+-- Connect the key press event to the function
+game:GetService("UserInputService").InputBegan:Connect(OnKeyPressed)
 
 -- Example usage
 while true do
-    local opponents = game:GetService("Players"):GetPlayers()
-    for _, opponent in ipairs(opponents) do
-        if opponent ~= player and opponent.Character and opponent.Character.Humanoid.RigType == Enum.HumanoidRigType.R6 then
-            local predictionChance = PredictHits(opponent)
-            if predictionChance > 0 then
-                print(string.format("Opponent is in FOV and on opposite team! Prediction chance: %.2f%%", predictionChance * 100))
-            end
-        end
-    end
-    wait(1)
+   local player = game.Players.LocalPlayer
+   local range = regularRangeEnabled and DoubleRangeOnClose(player, regularRange) or regularRange
+   print("Range:", range)
+   wait(1)
 end
